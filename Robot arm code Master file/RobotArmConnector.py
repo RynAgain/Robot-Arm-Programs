@@ -1,7 +1,12 @@
-#RobotArmConnector
+# RobotArmConnector
 import serial
 import time
 import random
+import pygame
+
+# Initialize Pygame for joystick support
+pygame.init()
+pygame.joystick.init()
 
 # Replace '/dev/ttyUSB0' with the port to which your 3D printer is connected
 printer_port = 'COM3'
@@ -13,10 +18,11 @@ printer = serial.Serial(printer_port, baud_rate, timeout=2)
 
 # Give the printer some time to initialize
 time.sleep(2)
-home ="G1 X0 Y0 Z0"
+home = "G1 X0 Y0 Z0"
 
 def wait(x):
     time.sleep(x)
+
 # A function to send G-code commands to the 3D printer
 def send_gcode(gcode):
     print(f"Sending: {gcode}")
@@ -35,9 +41,8 @@ def gcode_gen(x, y, z):
 def testing():
     a = random.randint(-90, 90)
     b = random.randint(-70, 70)
-    c =  random.randint(-120, 120)
+    c = random.randint(-120, 120)
     send_gcode(gcode_gen(a, b, c))
-    
 
 def set_zero():
     send_gcode("G92 X0 Y0 Z0")
@@ -57,67 +62,36 @@ def get_okay():
         else:
             # If there's no more data coming in, exit the loop
             break
-# Sending some example G-code commands
-#send_gcode("G1 X-270 Y-270 Z-320")  # Move to X50, Y50 at 3000mm/min speed
-#send_gcode("G1 X-360 Y-360 Z-360")
-#send_gcode("G1 X-270 Y-360 Z-360")
-#wait(2)
-#send_home()
-#send_gcode("G1 X-270 Y-360 Z-270")
-#send_gcode("G1 X-270 Y-300 Z-270")
-#wait(2)
-x = 0
-t = 0
-#if t is one then this enabled 
-while x < 10 and t == 1:
-    testing()
-    x += 1
-    print("Testing:  " + x)
 
-#send_gcode("G92 X0 Y0 Z0")
+# Initialize the first joystick
+if pygame.joystick.get_count() > 0:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+    print(f"Initialized Joystick: {joystick.get_name()}")
 
+# PS5 Controller Mapping
+button_mapping = {
+    0: "home",  # Example: Button 0 maps to home
+    1: "zero",  # Example: Button 1 maps to set zero
+    # Add more mappings as needed
+}
 
-#Manual Control interface
-control = False
-while control == True:
-    r = input("Control:  ")
-    print("\n")
-    if r == "h":
-        send_home()
-    elif r == "x":
-        a = input()
-        send_gcode(gcode_gen(a, 0, 0))
-    elif r == "y":
-        a = input()
-        send_gcode(gcode_gen(0, a, 0))
-    elif r == "z":
-        a = int(input())
-        send_gcode(gcode_gen(0, 0, a))
-    elif r == "t":
-        ti = int(input(""))
-        for i in range(ti):
-            testing()
-            get_okay()
-            print("got Okay from arm")
-        send_home()
-        
-    elif r == "end":
-        send_home()
-        control == False
-    elif r == "g":
-        c = input("")
-        send_gcode(c)
-    elif r == "zero":
-        set_zero()
-    else:
-        send_home
-    wait(1)
-    get_okay()
-
-
-
-
-#send_gcode("M84")  # Disable steppers
+# Main loop for joystick control
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.JOYBUTTONDOWN:
+            button = event.button
+            if button in button_mapping:
+                action = button_mapping[button]
+                if action == "home":
+                    send_home()
+                elif action == "zero":
+                    set_zero()
+                # Add more actions as needed
+        elif event.type == pygame.QUIT:
+            running = False
 
 # Close the serial connection
-#printer.close()
+printer.close()
+pygame.quit()

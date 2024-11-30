@@ -1,0 +1,8 @@
+{
+  "button_mapping": {
+    "0": "home",
+    "1": "zero",
+    "2": "custom_action_1",
+    "3": "custom_action_2"
+  }
+}
